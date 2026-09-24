@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Airtel Receipt Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --card-bg: #fdfdfd;
+    --border: #e0e0e0;
+    --red: #e60000;
+    --ink: #222222;
+    --label: #555555;
+    --muted: #666666;
+    --th: #333333;
+    --th-bg: #f4f4f4;
+    --line: #dddddd;
+    --line-soft: #eeeeee;
+    --footer: #777777;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: Helvetica, Arial, sans-serif;
+    background: #e8eaed;
+    color: #222;
+    min-height: 100%;
+  }
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #1f2937;
+    color: #fff;
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .toolbar h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    margin-right: 8px;
+    align-self: center;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; }
+  .field input, .field select {
+    font: 14px/1.2 Helvetica, Arial, sans-serif;
+    padding: 8px 10px;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    background: #111827;
+    color: #fff;
+    min-width: 150px;
+  }
+  .field input:focus, .field select:focus { outline: 2px solid #e60000; border-color: #e60000; }
+  .actions { display: flex; gap: 8px; margin-left: auto; }
+  .btn {
+    font: 700 13px/1 Helvetica, Arial, sans-serif;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-pdf { background: #e60000; color: #fff; }
+  .btn-pdf:hover { background: #c50000; }
+  .btn-print { background: #374151; color: #fff; border: 1px solid #6b7280; }
+  .btn-print:hover { background: #4b5563; }
+
+  .stage {
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 48px;
+  }
+
+  /* ===== Exact A4 receipt (pt units, 1:1 with original PDF) ===== */
+  #page {
+    position: relative;
+    width: 595.28pt;
+    height: 841.89pt;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    transform-origin: top center;
+    overflow: hidden;
+  }
+  #card {
+    position: absolute;
+    left: 42.52pt;
+    top: 56.69pt;
+    width: 510.24pt;
+    height: 458.25pt;
+    background: var(--card-bg);
+    border: 0.75pt solid var(--border);
+    border-radius: 3pt;
+  }
+  .abs { position: absolute; white-space: nowrap; }
+
+  .brand {
+    left: 66.5pt; top: 85.2pt;
+    font: 700 18pt/1 Helvetica, Arial, sans-serif;
+    color: var(--red);
+    letter-spacing: .2pt;
+  }
+  .gst {
+    left: 66.5pt; top: 113.7pt;
+    font: 400 9pt/1 Helvetica, Arial, sans-serif;
+    color: var(--muted);
+  }
+  .inv-title {
+    right: 65.77pt; top: 85.7pt;
+    font: 700 20pt/1 Helvetica, Arial, sans-serif;
+    color: var(--ink);
+  }
+  .meta {
+    right: 65.77pt;
+    font: 400 9.5pt/1 Helvetica, Arial, sans-serif;
+    color: var(--label);
+    text-align: right;
+  }
+  .meta b { font-weight: 700; }
+  .meta-inv { top: 116.8pt; }
+  .meta-date { top: 132.6pt; }
+
+  .hdr-rule {
+    left: 65.77pt; top: 161.69pt;
+    width: 463.74pt; height: 0.75pt;
+    background: var(--line);
+  }
+
+  .row-label {
+    left: 65.77pt;
+    font: 700 10pt/1 Helvetica, Arial, sans-serif;
+    color: var(--label);
+  }
+  .row-value {
+    left: 181.7pt;
+    font: 400 10pt/1 Helvetica, Arial, sans-serif;
+    color: var(--ink);
+  }
+  .r1 { top: 184.4pt; } .r2 { top: 208.4pt; }
+  .r3 { top: 232.4pt; } .r4 { top: 256.4pt; }
+  .r5 { top: 280.4pt; }
+
+  .table {
+    left: 65.77pt; top: 312.44pt;
+    width: 463.74pt;
+  }
+  .thead {
+    display: flex;
+    height: 30.75pt;
+    background: var(--th-bg);
+    border-bottom: 1.5pt solid var(--line);
+  }
+  .thead > div {
+    font: 700 10pt/30.75pt Helvetica, Arial, sans-serif;
+    color: var(--th);
+    padding-left: 7.53pt;
+    overflow: hidden;
+  }
+  .c1 { width: 204.74pt; }
+  .c2 { width: 88.06pt; }
+  .c3 { width: 80.83pt; }
+  .c4 { width: 90.11pt; padding-left: 0 !important; }
+  .c4 span { display: block; padding-left: 7.53pt; }
+
+  .trow {
+    display: flex;
+    height: 25.65pt;
+    border-bottom: 0.75pt solid var(--line-soft);
+    align-items: center;
+  }
+  .trow > div {
+    font: 400 10pt/1 Helvetica, Arial, sans-serif;
+    color: var(--th);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .trow .c1 { padding-left: 7.53pt; }
+  .trow .c2, .trow .c3, .trow .c4 { text-align: right; padding-right: 7.5pt; }
+  .trow .c4 { padding-right: 7.51pt; }
+
+  .total-label {
+    right: 65.77pt; top: 395.2pt;
+    font: 700 10pt/1 Helvetica, Arial, sans-serif;
+    color: var(--label);
+    text-align: right;
+  }
+  .total-amount {
+    right: 65.77pt; top: 414.2pt;
+    font: 700 14pt/1 Helvetica, Arial, sans-serif;
+    color: var(--red);
+    text-align: right;
+  }
+
+  .footer-rule {
+    left: 65.77pt; top: 454.19pt;
+    width: 463.74pt; height: 0.75pt;
+    background: repeating-linear-gradient(
+      to right,
+      var(--line) 0 2.26pt,
+      transparent 2.26pt 4.52pt
+    );
+  }
+  .footer {
+    left: 0; right: 0;
+    text-align: center;
+    font: 400 8.5pt/1 Helvetica, Arial, sans-serif;
+    color: var(--footer);
+  }
+  .footer-1 { top: 468.3pt; }
+  .footer-2 { top: 481.1pt; }
+
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none !important; }
+    .stage { padding: 0; }
+    #page { box-shadow: none; margin: 0; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>AIRTEL RECEIPT GENERATOR</h1>
+  <div class="field">
+    <label for="invoiceNo">Invoice No</label>
+    <input id="invoiceNo" type="text" value="INV19600133-" spellcheck="false" />
+  </div>
+  <div class="field">
+    <label for="date">Date (DD-MM-YYYY)</label>
+    <input id="date" type="text" value="17-07-2026" spellcheck="false" />
+  </div>
+  <div class="field">
+    <label for="month">Month</label>
+    <select id="month">
+      <option value="1">January</option>
+      <option value="2">February</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7" selected>July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+  </div>
+  <div class="actions">
+    <button class="btn btn-print" id="btnPrint" type="button">Print / Save PDF</button>
+    <button class="btn btn-pdf" id="btnPdf" type="button">Download PDF</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div id="page">
+    <div id="card">
+      <div class="abs brand">AIRTEL INDIA</div>
+      <div class="abs gst">Bharti Airtel Limited | GSTIN: 07AAACB1234Q1Z1</div>
+      <div class="abs inv-title">INVOICE</div>
+      <div class="abs meta meta-inv"><b>Invoice No:</b> <span id="outInvoice">INV19600133-</span></div>
+      <div class="abs meta meta-date"><b>Date:</b> <span id="outDate">17-07-2026</span></div>
+      <div class="abs hdr-rule"></div>
+
+      <div class="abs row-label r1">Customer Name:</div>
+      <div class="abs row-value r1">Shyama</div>
+      <div class="abs row-label r2">Mobile Number:</div>
+      <div class="abs row-value r2">7891097522</div>
+      <div class="abs row-label r3">Billed Period:</div>
+      <div class="abs row-value r3" id="outPeriod">01-Jul-2026 to 31-Jul-2026</div>
+      <div class="abs row-label r4">Transaction ID:</div>
+      <div class="abs row-value r4">42574640</div>
+      <div class="abs row-label r5">Payment Method:</div>
+      <div class="abs row-value r5">UPI/Google Pay</div>
+
+      <div class="abs table">
+        <div class="thead">
+          <div class="c1">Description</div>
+          <div class="c2">Rate (INR)</div>
+          <div class="c3">GST 18%</div>
+          <div class="c4"><span>Total (INR)</span></div>
+        </div>
+        <div class="trow">
+          <div class="c1" id="outDesc">Prepaid Recharge - Airtel July</div>
+          <div class="c2">363.56</div>
+          <div class="c3">65.44</div>
+          <div class="c4">429.00</div>
+        </div>
+      </div>
+
+      <div class="abs total-label">Total Amount:</div>
+      <div class="abs total-amount">INR 429.00</div>
+
+      <div class="abs footer-rule"></div>
+      <div class="abs footer footer-1">This is a TEST document generated for development purposes only.</div>
+      <div class="abs footer footer-2">Bharti Airtel Ltd | Customer Care: 121 | Visit: airtel.in</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  const $ = (id) => document.getElementById(id);
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function parseDate(v) {
+    const m = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec((v || "").trim());
+    if (!m) return null;
+    const d = +m[1], mo = +m[2], y = +m[3];
+    if (mo < 1 || mo > 12) return null;
+    const dim = new Date(y, mo, 0).getDate();
+    if (d < 1 || d > dim) return null;
+    return { d, mo, y };
+  }
+
+  function lastDay(y, m) { return new Date(y, m, 0).getDate(); }
+
+  function refresh() {
+    const inv = $("invoiceNo").value;
+    const rawDate = $("date").value.trim();
+    const month = +$("month").value;
+
+    const dt = parseDate(rawDate);
+    const year = dt ? dt.y : 2026;
+    const dateStr = dt ? `${pad(dt.d)}-${pad(dt.mo)}-${pad(dt.y)}` : rawDate;
+
+    const period = `01-${ABBR[month - 1]}-${year} to ${lastDay(year, month)}-${ABBR[month - 1]}-${year}`;
+    const desc = `Prepaid Recharge - Airtel ${FULL[month - 1]}`;
+
+    $("outInvoice").textContent = inv;
+    $("outDate").textContent = dateStr;
+    $("outPeriod").textContent = period;
+    $("outDesc").textContent = desc;
+  }
+
+  ["invoiceNo", "date", "month"].forEach((id) => {
+    $(id).addEventListener("input", refresh);
+    $(id).addEventListener("change", refresh);
+  });
+  refresh();
+
+  $("btnPrint").addEventListener("click", () => window.print());
+
+  $("btnPdf").addEventListener("click", async () => {
+    const btn = $("btnPdf");
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Rendering…";
+    try {
+      const page = $("page");
+      const canvas = await html2canvas(page, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, 595.28, 841.89);
+      const dt = parseDate($("date").value);
+      const y = dt ? dt.y : "2026";
+      const mo = $("month").value.padStart(2, "0");
+      pdf.save(`airtel_receipt_${mo}-${y}.pdf`);
+    } catch (e) {
+      alert("PDF failed: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old;
+    }
+  });
+</script>
+</body>
+</html>
