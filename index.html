@@ -97,8 +97,9 @@
     background: var(--card-bg);
     border: 0.75pt solid var(--border);
     border-radius: 3pt;
+    z-index: 0;
   }
-  .abs { position: absolute; white-space: nowrap; }
+  .abs { position: absolute; white-space: nowrap; z-index: 1; }
 
   .brand {
     left: 66.5pt; top: 85.2pt;
@@ -261,47 +262,47 @@
 
 <div class="stage">
   <div id="page">
-    <div id="card">
-      <div class="abs brand">AIRTEL INDIA</div>
-      <div class="abs gst">Bharti Airtel Limited | GSTIN: 07AAACB1234Q1Z1</div>
-      <div class="abs inv-title">INVOICE</div>
-      <div class="abs meta meta-inv"><b>Invoice No:</b> <span id="outInvoice">INV19600133-</span></div>
-      <div class="abs meta meta-date"><b>Date:</b> <span id="outDate">17-07-2026</span></div>
-      <div class="abs hdr-rule"></div>
+    <div id="card" aria-hidden="true"></div>
 
-      <div class="abs row-label r1">Customer Name:</div>
-      <div class="abs row-value r1">Shyama</div>
-      <div class="abs row-label r2">Mobile Number:</div>
-      <div class="abs row-value r2">7891097522</div>
-      <div class="abs row-label r3">Billed Period:</div>
-      <div class="abs row-value r3" id="outPeriod">01-Jul-2026 to 31-Jul-2026</div>
-      <div class="abs row-label r4">Transaction ID:</div>
-      <div class="abs row-value r4">42574640</div>
-      <div class="abs row-label r5">Payment Method:</div>
-      <div class="abs row-value r5">UPI/Google Pay</div>
+    <div class="abs brand">AIRTEL INDIA</div>
+    <div class="abs gst">Bharti Airtel Limited | GSTIN: 07AAACB1234Q1Z1</div>
+    <div class="abs inv-title">INVOICE</div>
+    <div class="abs meta meta-inv"><b>Invoice No:</b> <span id="outInvoice">INV19600133-</span></div>
+    <div class="abs meta meta-date"><b>Date:</b> <span id="outDate">17-07-2026</span></div>
+    <div class="abs hdr-rule"></div>
 
-      <div class="abs table">
-        <div class="thead">
-          <div class="c1">Description</div>
-          <div class="c2">Rate (INR)</div>
-          <div class="c3">GST 18%</div>
-          <div class="c4"><span>Total (INR)</span></div>
-        </div>
-        <div class="trow">
-          <div class="c1" id="outDesc">Prepaid Recharge - Airtel July</div>
-          <div class="c2">363.56</div>
-          <div class="c3">65.44</div>
-          <div class="c4">429.00</div>
-        </div>
+    <div class="abs row-label r1">Customer Name:</div>
+    <div class="abs row-value r1">Shyama</div>
+    <div class="abs row-label r2">Mobile Number:</div>
+    <div class="abs row-value r2">7891097522</div>
+    <div class="abs row-label r3">Billed Period:</div>
+    <div class="abs row-value r3" id="outPeriod">01-Jul-2026 to 31-Jul-2026</div>
+    <div class="abs row-label r4">Transaction ID:</div>
+    <div class="abs row-value r4">42574640</div>
+    <div class="abs row-label r5">Payment Method:</div>
+    <div class="abs row-value r5">UPI/Google Pay</div>
+
+    <div class="abs table">
+      <div class="thead">
+        <div class="c1">Description</div>
+        <div class="c2">Rate (INR)</div>
+        <div class="c3">GST 18%</div>
+        <div class="c4"><span>Total (INR)</span></div>
       </div>
-
-      <div class="abs total-label">Total Amount:</div>
-      <div class="abs total-amount">INR 429.00</div>
-
-      <div class="abs footer-rule"></div>
-      <div class="abs footer footer-1">This is a TEST document generated for development purposes only.</div>
-      <div class="abs footer footer-2">Bharti Airtel Ltd | Customer Care: 121 | Visit: airtel.in</div>
+      <div class="trow">
+        <div class="c1" id="outDesc">Prepaid Recharge - Airtel July</div>
+        <div class="c2">363.56</div>
+        <div class="c3">65.44</div>
+        <div class="c4">429.00</div>
+      </div>
     </div>
+
+    <div class="abs total-label">Total Amount:</div>
+    <div class="abs total-amount">INR 429.00</div>
+
+    <div class="abs footer-rule"></div>
+    <div class="abs footer footer-1">This is a TEST document generated for development purposes only.</div>
+    <div class="abs footer footer-2">Bharti Airtel Ltd | Customer Care: 121 | Visit: airtel.in</div>
   </div>
 </div>
 
